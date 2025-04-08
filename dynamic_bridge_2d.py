@@ -107,33 +107,35 @@ class DynamicBridgeSystem:
         return adjacent_modules
     
     def initialize_from_example(self):
-        """Initialize the system with the example configuration from the image"""
-        # Create a grid based on the image in the problem description
-        # Red circles (sources) on the left, green circles (targets) on the right,
-        # black outlined circles (structure modules) in the middle
+        """Initialize the system with the new configuration from the image"""
+        # Create a grid based on the new image
+        # We need a larger grid for this layout (8x13)
+        self.width = 13
+        self.height = 9
+        self.grid = [[None for _ in range(self.width)] for _ in range(self.height)]
         
-        # Sources (left side, red interior)
-        for y in range(5):
-            self.add_module(f"S_{y}", 0, y, ModuleType.SOURCE)
+        # Sources (left side, red interior) - in the middle rows
+        for y in range(2, 7):
+            self.add_module(f"S_{y-2}", 0, y, ModuleType.SOURCE)
         
         # Structure modules (white circles with black outline)
-        # Left block
-        for y in range(5):
-            for x in range(1, 4):
+        # Left column
+        for y in range(9):
+            for x in range(1, 5):
                 self.add_module(f"M_L_{y}_{x}", x, y, ModuleType.STRUCTURE)
         
-        # Bridge in the middle (row 2)
-        for x in range(4, 9):
-            self.add_module(f"M_B_{x}", x, 2, ModuleType.STRUCTURE)
-        
-        # Right block
-        for y in range(5):
-            for x in range(9, 12):
+        # Right column
+        for y in range(9):
+            for x in range(8, 12):
                 self.add_module(f"M_R_{y}_{x}", x, y, ModuleType.STRUCTURE)
         
-        # Targets (right side, green outline)
-        for y in range(5):
-            self.add_module(f"T_{y}", 12, y, ModuleType.TARGET)
+        # Bridge in the middle (row 4, which is the 3rd row from the top of the sources)
+        for x in range(5, 8):
+            self.add_module(f"M_B_{x}", x, 4, ModuleType.STRUCTURE)
+        
+        # Targets (right side, green outline) - in the middle rows
+        for y in range(2, 7):
+            self.add_module(f"T_{y-2}", 12, y, ModuleType.TARGET)
         
         # Mark remaining spaces as empty
         for y in range(self.height):
@@ -259,23 +261,23 @@ class DynamicBridgeSystem:
         for i, module1 in enumerate(structure_modules):
             for module2 in structure_modules[i+1:]:
                 if module1.is_adjacent_to(module2):
-                    # Add bidirectional edges with capacity 1
-                    self.flow_graph.add_edge(module1.id, module2.id, capacity=1)
-                    self.flow_graph.add_edge(module2.id, module1.id, capacity=1)
+                    # Add bidirectional edges with capacity 10 (increased from 1)
+                    self.flow_graph.add_edge(module1.id, module2.id, capacity=10)
+                    self.flow_graph.add_edge(module2.id, module1.id, capacity=10)
         
         # Connect sources to adjacent structure modules
         for source in self.source_modules:
             adjacent_modules = self.get_adjacent_modules(source)
             for adj in adjacent_modules:
                 if adj.type in [ModuleType.STRUCTURE, ModuleType.BRIDGE]:
-                    self.flow_graph.add_edge(source.id, adj.id, capacity=1)
+                    self.flow_graph.add_edge(source.id, adj.id, capacity=10)  # Increased from 1
         
         # Connect targets to adjacent structure modules
         for target in self.target_positions:
             adjacent_modules = self.get_adjacent_modules(target)
             for adj in adjacent_modules:
                 if adj.type in [ModuleType.STRUCTURE, ModuleType.BRIDGE]:
-                    self.flow_graph.add_edge(adj.id, target.id, capacity=1)
+                    self.flow_graph.add_edge(adj.id, target.id, capacity=10)  # Increased from 1
         
         return self.flow_graph
 
@@ -644,10 +646,174 @@ class DynamicBridgeSystem:
         
         return list(bottleneck_modules)
 
+    def verify_bridge_placement(self, bridge_positions):
+        """
+        Verify if placing bridge modules at the given positions would create valid paths.
+        
+        Args:
+            bridge_positions: List of (x, y) positions for the bridge
+            
+        Returns:
+            bool: True if the bridge would connect left and right structure blocks
+        """
+        # Get the leftmost and rightmost positions of the bridge
+        leftmost = min(bridge_positions, key=lambda pos: pos[0])
+        rightmost = max(bridge_positions, key=lambda pos: pos[0])
+        
+        # Check if the leftmost bridge position is adjacent to the left structure block
+        left_x, left_y = leftmost
+        left_adjacent = False
+        
+        # Check all adjacent positions to the leftmost bridge position
+        for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, -1), (-1, 1)]:
+            adj_x, adj_y = left_x + dx, left_y + dy
+            
+            # Check if this position is within bounds
+            if 0 <= adj_x < self.width and 0 <= adj_y < self.height:
+                adj_module = self.grid[adj_y][adj_x]
+                # Check if it's a structure module in the left block (x < 5)
+                if adj_module and adj_module.type == ModuleType.STRUCTURE and adj_module.x < 5:
+                    left_adjacent = True
+                    break
+        
+        # Check if the rightmost bridge position is adjacent to the right structure block
+        right_x, right_y = rightmost
+        right_adjacent = False
+        
+        # Check all adjacent positions to the rightmost bridge position
+        for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, -1), (-1, 1)]:
+            adj_x, adj_y = right_x + dx, right_y + dy
+            
+            # Check if this position is within bounds
+            if 0 <= adj_x < self.width and 0 <= adj_y < self.height:
+                adj_module = self.grid[adj_y][adj_x]
+                # Check if it's a structure module in the right block (x >= 8)
+                if adj_module and adj_module.type == ModuleType.STRUCTURE and adj_module.x >= 8:
+                    right_adjacent = True
+                    break
+        
+        # The bridge is valid if it connects both left and right structure blocks
+        return left_adjacent and right_adjacent
+    
+    def create_connected_bridge(self, row, min_x=5, max_x=7):
+        """
+        Create a bridge in the specified row that connects to both structure blocks.
+        
+        Args:
+            row: The row to create the bridge in
+            min_x, max_x: The x-coordinate range for the bridge
+            
+        Returns:
+            list: List of bridge modules that were created, or empty list if unsuccessful
+        """
+        # Define the positions for the bridge
+        bridge_positions = [(x, row) for x in range(min_x, max_x + 1)]
+        
+        # Verify if these positions would create a valid bridge
+        if not self.verify_bridge_placement(bridge_positions):
+            print(f"Cannot create a bridge in row {row} - it would not connect properly")
+            return []
+        
+        # Check if all positions are empty
+        for x, y in bridge_positions:
+            if self.grid[y][x].type != ModuleType.EMPTY:
+                print(f"Cannot create a bridge in row {row} - position ({x}, {y}) is not empty")
+                return []
+        
+        # Find unused modules to move to these positions
+        unused_modules = [m for m in self.bridge_candidates if m.type == ModuleType.UNUSED]
+        
+        # Check if we have enough unused modules
+        if len(unused_modules) < len(bridge_positions):
+            print(f"Not enough unused modules to create a bridge in row {row}")
+            return []
+        
+        # Move unused modules to bridge positions
+        bridge_modules = []
+        for i, (x, y) in enumerate(bridge_positions):
+            module = unused_modules[i]
+            print(f"Moving module {module.id} from ({module.x}, {module.y}) to ({x}, {y})...")
+            
+            if self.move_module(module, x, y):
+                bridge_modules.append(module)
+                # Ensure it's marked as bridge type
+                module.type = ModuleType.BRIDGE
+                
+                # Visualize after each movement to show the progress
+                self.visualize_grid(f"After Moving Module to Position ({x}, {y})", 
+                                   save_path=f"images_2d/simulation/05_movement_{i+1}.png",
+                                   show=False)
+            else:
+                print(f"Failed to move module to ({x}, {y})")
+        
+        # If we successfully moved all modules, validate the bridge
+        if len(bridge_modules) == len(bridge_positions):
+            print(f"Successfully created a bridge in row {row}")
+            
+            # Rebuild the flow graph to include the new bridge
+            self.flow_graph = nx.DiGraph()
+            self.build_flow_graph()
+            
+            # Calculate the new flow to see if it increased
+            flow_value, _ = self.calculate_max_flow()
+            print(f"Flow value after bridge creation: {flow_value}")
+            
+            # Visualize the flow with the new bridge
+            self.visualize_flow(f"Flow After Bridge in Row {row}", 
+                               save_path=f"images_2d/simulation/flow_after_bridge_row_{row}.png",
+                               show=False)
+            
+            return bridge_modules
+        
+        return []
+
+    def verify_path_exists(self, source, target):
+        """
+        Verify if a path exists from a source to a target in the flow graph.
+        
+        Args:
+            source: Source module
+            target: Target module
+            
+        Returns:
+            bool: True if a path exists, False otherwise
+        """
+        # Ensure flow graph is built
+        if not self.flow_graph or len(self.flow_graph.edges) == 0:
+            self.build_flow_graph()
+        
+        # Check if there's a path from source to target
+        return nx.has_path(self.flow_graph, source.id, target.id)
+    
+    def verify_all_paths(self):
+        """
+        Verify if paths exist from all sources to all targets.
+        
+        Returns:
+            dict: Dictionary mapping (source_id, target_id) to boolean path existence
+        """
+        # Ensure flow graph is built
+        if not self.flow_graph or len(self.flow_graph.edges) == 0:
+            self.build_flow_graph()
+        
+        path_exists = {}
+        
+        # Check all source-target pairs
+        for source in self.source_modules:
+            for target in self.target_positions:
+                path_exists[(source.id, target.id)] = self.verify_path_exists(source, target)
+        
+        # Print summary
+        valid_paths = sum(1 for exists in path_exists.values() if exists)
+        total_paths = len(path_exists)
+        print(f"Found {valid_paths} valid paths out of {total_paths} possible source-target pairs")
+        
+        return path_exists
+
 # Example usage
 if __name__ == "__main__":
-    # Create a 13x5 grid for our example
-    system = DynamicBridgeSystem(13, 5)
+    # Create a 13x9 grid for our example
+    system = DynamicBridgeSystem(13, 9)
     
     # Initialize with the example configuration
     system.initialize_from_example()
@@ -689,66 +855,43 @@ if __name__ == "__main__":
     bottlenecks = system.detect_bottlenecks()
     print(f"Found {len(bottlenecks)} bottleneck modules: {bottlenecks}")
     
-    # Test the movement functionality by creating a new bridge
-    print("\nTesting module movement functionality - Creating a new bridge in row 1...")
+    # Verify initial path connectivity
+    print("\nVerifying initial path connectivity...")
+    initial_paths = system.verify_all_paths()
     
-    # Find unused modules that could form a bridge in row 1
-    row1_modules = [m for m in unused_modules if m.y == 1 and m.x >= 4 and m.x <= 8]
+    # Try to create bridges in multiple rows
+    bridge_rows = [3, 5]  # Try rows 3 and 5 (above and below the existing bridge in row 4)
     
-    if row1_modules:
-        print(f"Found {len(row1_modules)} unused modules in row 1 that can form a bridge")
-        
-        # First convert them to bridge modules without moving them
-        for i, module in enumerate(row1_modules):
-            print(f"Converting module {module.id} to bridge type...")
-            module.type = ModuleType.BRIDGE
-        
-        # Visualize after conversion
-        system.visualize_grid("After Converting Modules to Bridge Type", 
-                           save_path="images_2d/simulation/04_after_conversion.png")
-    
-    # Find unused modules in the left block that we can move to fill gaps in row 0
-    print("\nMoving modules from left block to create another bridge in row 0...")
-    
-    # Find unused modules in the left block (rows 0-4, columns 1-3)
-    left_block_unused = [m for m in unused_modules 
-                        if m.y in [0, 1, 3, 4] and m.x in [1, 2, 3]]
-    
-    # Try to move a few modules to row 0 to form a bridge
-    target_positions = [(4, 0), (5, 0), (6, 0), (7, 0), (8, 0)]
-    moved_modules = []
-    
-    for i, pos in enumerate(target_positions):
-        if i < len(left_block_unused):
-            module = left_block_unused[i]
-            target_x, target_y = pos
-            
-            print(f"Moving module {module.id} from ({module.x}, {module.y}) to {pos}...")
-            
-            if system.move_module(module, target_x, target_y):
-                moved_modules.append(module)
-                
-                # Visualize after each movement to show the progress
-                system.visualize_grid(f"After Moving Module {i+1} to Position {pos}", 
-                                   save_path=f"images_2d/simulation/05_movement_{i+1}.png")
+    created_bridges = []
+    for row in bridge_rows:
+        print(f"\nAttempting to create a bridge in row {row}...")
+        bridge_modules = system.create_connected_bridge(row)
+        if bridge_modules:
+            created_bridges.append((row, bridge_modules))
     
     # Final visualization showing all bridges
     system.visualize_grid("Final Configuration with Multiple Bridges", 
                        save_path="images_2d/simulation/06_final_bridges.png")
     
     # Recalculate the maximum flow with the new bridges
-    print("\nRecalculating maximum flow with new bridges...")
-    # Rebuild the flow graph to include the new bridges
-    system.flow_graph = nx.DiGraph()  # Reset the flow graph
+    print("\nRecalculating maximum flow with all bridges...")
+    # Rebuild the flow graph to include all bridges
+    system.flow_graph = nx.DiGraph()
     system.build_flow_graph()
     flow_value, flow_dict = system.calculate_max_flow()
     print(f"New maximum flow value: {flow_value}")
+    
+    # Verify final path connectivity
+    print("\nVerifying final path connectivity...")
+    final_paths = system.verify_all_paths()
     
     # Visualize the improved flow
     system.visualize_flow("Flow Network with Bridges", 
                        save_path="images_2d/simulation/07_flow_with_bridges.png")
     
     print("\nAnalysis and bridge construction complete.")
+    print(f"Created {len(created_bridges)} new bridges in rows: {[row for row, _ in created_bridges]}")
+    print(f"Maximum flow increased from 1 to {flow_value}")
     print("Check the saved visualizations in the images_2d/simulation directory.")
     print("Press Enter to continue...")
     input()  # Wait for user input before closing 

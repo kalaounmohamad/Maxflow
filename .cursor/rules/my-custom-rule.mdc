@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+# Your rule content
+
+- Use the virtual environment that I already created in "C:\VisibleSim\Maxflow\.venv " when running the code.
+- Explain everything you write and the logic behind it.
+- Keep a clean file architecture.
