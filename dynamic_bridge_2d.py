@@ -246,16 +246,13 @@ class DynamicBridgeSystem:
         self.flow_graph.add_node(self.super_source, pos=(-1, self.height//2), type='super_source')
         self.flow_graph.add_node(self.super_sink, pos=(self.width, self.height//2), type='super_sink')
         
-        # Connect source modules to super source with capacity 1
+        # Connect source modules to super source
         for source in self.source_modules:
             self.flow_graph.add_edge(self.super_source, source.id, capacity=1)
         
-        # Connect target positions to super sink with capacity 1
+        # Connect target positions to super sink
         for target in self.target_positions:
             self.flow_graph.add_edge(target.id, self.super_sink, capacity=1)
-        
-        # Identify original bridge modules (in row 4)
-        original_bridge_ids = ["M_B_5", "M_B_6", "M_B_7"]
         
         # Connect adjacent structure modules
         structure_modules = [m for m in self.modules.values() 
@@ -813,193 +810,6 @@ class DynamicBridgeSystem:
         
         return path_exists
 
-    def are_positions_empty(self, positions):
-        """
-        Check if all given positions are empty and within grid bounds.
-        
-        Args:
-            positions: List of (x, y) coordinate tuples to check
-            
-        Returns:
-            bool: True if all positions are empty, False otherwise
-        """
-        for x, y in positions:
-            # Check if position is within grid bounds
-            if not (0 <= x < self.width and 0 <= y < self.height):
-                return False
-                
-            # Check if position is empty
-            if self.grid[y][x].type != ModuleType.EMPTY:
-                return False
-                
-        return True
-    
-    def evaluate_bridge_location(self, bridge_positions):
-        """
-        Simulate placing a bridge at the given positions and evaluate flow improvement.
-        
-        Args:
-            bridge_positions: List of (x, y) positions for the proposed bridge
-            
-        Returns:
-            float: Flow improvement (new_flow - current_flow), or -1 if invalid
-        """
-        # Validate input
-        if not bridge_positions:
-            return -1
-            
-        # Calculate current flow as baseline
-        current_flow, _ = self.calculate_max_flow()
-        
-        # Check if positions are valid for bridge placement
-        if not self.verify_bridge_placement(bridge_positions) or not self.are_positions_empty(bridge_positions):
-            return -1
-            
-        # Create a temporary copy of the system for simulation
-        temp_system = copy.deepcopy(self)
-        
-        # Find unused modules to simulate bridge creation
-        unused_modules = [m for m in temp_system.bridge_candidates if m.type == ModuleType.UNUSED]
-        
-        # Check if we have enough unused modules
-        if len(unused_modules) < len(bridge_positions):
-            return -1
-            
-        # Place bridge modules in the temporary system
-        for i, (x, y) in enumerate(bridge_positions):
-            module = unused_modules[i]
-            # Simply teleport the module (don't need to simulate movement for evaluation)
-            module.x, module.y = x, y
-            module.type = ModuleType.BRIDGE
-            temp_system.grid[y][x] = module
-            
-        # Rebuild flow graph in temporary system
-        temp_system.flow_graph = nx.DiGraph()
-        temp_system.build_flow_graph()
-        
-        # Calculate new flow
-        new_flow, _ = temp_system.calculate_max_flow()
-        
-        # Return improvement
-        return new_flow - current_flow
-
-    def iterative_bottleneck_optimization(self, max_iterations=5, min_improvement=0, visualization_dir=None):
-        """
-        Iteratively identify bottlenecks and create bridges to address them.
-        
-        This method implements an adaptive optimization approach that:
-        1. Detects current bottlenecks in the flow network
-        2. Evaluates potential bridges around each bottleneck
-        3. Creates the bridge with the highest expected flow improvement
-        4. Repeats until no more beneficial bridges can be created
-        
-        Args:
-            max_iterations: Maximum number of optimization iterations
-            min_improvement: Minimum required flow improvement to continue
-            visualization_dir: Directory to save visualization images (optional)
-            
-        Returns:
-            tuple: (created_bridges, total_improvement)
-                - created_bridges: List of dictionaries with bridge information
-                - total_improvement: Overall flow improvement achieved
-        """
-        initial_flow, _ = self.calculate_max_flow()
-        created_bridges = []
-        current_flow = initial_flow
-        iteration_visualizations = []
-        
-        print(f"Starting iterative optimization with initial flow: {initial_flow}")
-        
-        for iteration in range(max_iterations):
-            print(f"\n--- Iteration {iteration+1}/{max_iterations} ---")
-            
-            # 1. Detect bottlenecks
-            bottlenecks = self.detect_bottlenecks()
-            if not bottlenecks:
-                print("No bottlenecks detected - network is optimized!")
-                break
-                
-            print(f"Detected bottlenecks: {bottlenecks}")
-            
-            # 2. For each bottleneck, identify potential bypass options
-            best_bridge = None
-            best_improvement = 0
-            
-            for bottleneck_id in bottlenecks:
-                bottleneck = self.modules.get(bottleneck_id)
-                if not bottleneck:
-                    continue
-                    
-                print(f"Analyzing bottleneck: {bottleneck_id} at ({bottleneck.x}, {bottleneck.y})")
-                
-                # Find rows adjacent to bottleneck for potential bridges
-                for offset in [-1, 1]:  # Check one row above and below
-                    row = bottleneck.y + offset
-                    
-                    if 0 <= row < self.height:  # Check row is within grid bounds
-                        # Create potential bridge positions
-                        bridge_positions = [(x, row) for x in range(5, 8)]
-                        
-                        # 3. Evaluate potential bridge at this location
-                        improvement = self.evaluate_bridge_location(bridge_positions)
-                        
-                        print(f"  - Row {row}: Expected improvement = {improvement}")
-                        
-                        if improvement > best_improvement:
-                            best_improvement = improvement
-                            best_bridge = {'row': row, 'positions': bridge_positions, 'improvement': improvement}
-            
-            # 4. If we found a beneficial bridge, create it
-            if best_bridge and best_improvement > min_improvement:
-                print(f"\nCreating bridge in row {best_bridge['row']} for expected improvement of {best_bridge['improvement']}")
-                
-                # Actually create the bridge
-                bridge_modules = self.create_connected_bridge(best_bridge['row'])
-                
-                if bridge_modules:
-                    bridge_info = {
-                        'row': best_bridge['row'],
-                        'modules': [m.id for m in bridge_modules],
-                        'improvement': best_improvement,
-                        'iteration': iteration + 1
-                    }
-                    created_bridges.append(bridge_info)
-                    
-                    # Update current flow
-                    current_flow, _ = self.calculate_max_flow()
-                    actual_improvement = current_flow - (initial_flow + sum(b['improvement'] for b in created_bridges[:-1]))
-                    print(f"New flow after bridge creation: {current_flow}")
-                    print(f"Actual improvement: {actual_improvement} (expected: {best_improvement})")
-                    
-                    # Save visualization if directory provided
-                    if visualization_dir:
-                        os.makedirs(visualization_dir, exist_ok=True)
-                        vis_path = f"{visualization_dir}/iteration_{iteration+1}_bridge_row_{best_bridge['row']}.png"
-                        self.visualize_grid(f"After Bridge in Row {best_bridge['row']} (Iteration {iteration+1})", 
-                                          save_path=vis_path, show=False)
-                        
-                        # Visualize flow with new bridge
-                        flow_vis_path = f"{visualization_dir}/iteration_{iteration+1}_flow.png"
-                        self.visualize_flow(f"Flow After Iteration {iteration+1}", 
-                                         save_path=flow_vis_path, show=False)
-                        
-                        iteration_visualizations.append((vis_path, flow_vis_path))
-                else:
-                    print("Failed to create bridge - breaking optimization loop")
-                    break
-            else:
-                print(f"No beneficial bridges found (best improvement: {best_improvement})")
-                break
-        
-        total_improvement = current_flow - initial_flow
-        print(f"\nOptimization complete:")
-        print(f"- Initial flow: {initial_flow}")
-        print(f"- Final flow: {current_flow}")
-        print(f"- Total improvement: +{total_improvement}")
-        print(f"- Bridges created: {len(created_bridges)}")
-        
-        return created_bridges, total_improvement
-
 # Example usage
 if __name__ == "__main__":
     # Create a 13x9 grid for our example
@@ -1013,13 +823,12 @@ if __name__ == "__main__":
         os.makedirs("images_2d")
     
     # Create simulation directory for step-by-step images
-    simulation_dir = "images_2d/simulation"
-    if not os.path.exists(simulation_dir):
-        os.makedirs(simulation_dir)
+    if not os.path.exists("images_2d/simulation"):
+        os.makedirs("images_2d/simulation")
     
     # Visualize the initial state and save it
     system.visualize_grid("Initial Configuration", 
-                       save_path=f"{simulation_dir}/01_initial_configuration.png")
+                       save_path="images_2d/simulation/01_initial_configuration.png")
     
     print("Grid initialized. Check the saved visualization in images_2d/simulation/")
     
@@ -1030,7 +839,7 @@ if __name__ == "__main__":
     
     # Visualize the flow
     system.visualize_flow("Initial Flow Network", 
-                       save_path=f"{simulation_dir}/02_initial_flow.png")
+                       save_path="images_2d/simulation/02_initial_flow.png")
     
     # Identify unused modules
     print("Identifying unused modules...")
@@ -1039,42 +848,50 @@ if __name__ == "__main__":
     
     # Visualize the grid with unused modules highlighted
     system.visualize_grid("Configuration with Unused Modules Identified", 
-                       save_path=f"{simulation_dir}/03_unused_modules_identified.png")
+                       save_path="images_2d/simulation/03_unused_modules_identified.png")
+    
+    # Detect bottlenecks
+    print("Detecting bottlenecks...")
+    bottlenecks = system.detect_bottlenecks()
+    print(f"Found {len(bottlenecks)} bottleneck modules: {bottlenecks}")
     
     # Verify initial path connectivity
     print("\nVerifying initial path connectivity...")
     initial_paths = system.verify_all_paths()
     
-    # Create a directory for optimization iterations
-    optimization_dir = f"{simulation_dir}/optimization"
-    if not os.path.exists(optimization_dir):
-        os.makedirs(optimization_dir)
+    # Try to create bridges in multiple rows
+    bridge_rows = [3, 5]  # Try rows 3 and 5 (above and below the existing bridge in row 4)
     
-    # Run iterative bottleneck optimization
-    print("\nStarting iterative bottleneck optimization...")
-    created_bridges, improvement = system.iterative_bottleneck_optimization(
-        max_iterations=3,
-        min_improvement=0,
-        visualization_dir=optimization_dir
-    )
+    created_bridges = []
+    for row in bridge_rows:
+        print(f"\nAttempting to create a bridge in row {row}...")
+        bridge_modules = system.create_connected_bridge(row)
+        if bridge_modules:
+            created_bridges.append((row, bridge_modules))
     
     # Final visualization showing all bridges
-    system.visualize_grid("Final Configuration with Optimized Bridges", 
-                       save_path=f"{simulation_dir}/06_final_bridges.png")
+    system.visualize_grid("Final Configuration with Multiple Bridges", 
+                       save_path="images_2d/simulation/06_final_bridges.png")
+    
+    # Recalculate the maximum flow with the new bridges
+    print("\nRecalculating maximum flow with all bridges...")
+    # Rebuild the flow graph to include all bridges
+    system.flow_graph = nx.DiGraph()
+    system.build_flow_graph()
+    flow_value, flow_dict = system.calculate_max_flow()
+    print(f"New maximum flow value: {flow_value}")
+    
+    # Verify final path connectivity
+    print("\nVerifying final path connectivity...")
+    final_paths = system.verify_all_paths()
     
     # Visualize the improved flow
-    system.visualize_flow("Final Flow Network with Optimized Bridges", 
-                       save_path=f"{simulation_dir}/07_flow_with_bridges.png")
-    
-    # Generate a summary of created bridges
-    print("\nBridge Creation Summary:")
-    for i, bridge in enumerate(created_bridges):
-        print(f"Bridge {i+1} in row {bridge['row']} (Iteration {bridge['iteration']}):")
-        print(f"- Module IDs: {bridge['modules']}")
-        print(f"- Expected improvement: {bridge['improvement']}")
+    system.visualize_flow("Flow Network with Bridges", 
+                       save_path="images_2d/simulation/07_flow_with_bridges.png")
     
     print("\nAnalysis and bridge construction complete.")
-    print(f"Maximum flow increased from {flow_value} to {flow_value + improvement}")
+    print(f"Created {len(created_bridges)} new bridges in rows: {[row for row, _ in created_bridges]}")
+    print(f"Maximum flow increased from 1 to {flow_value}")
     print("Check the saved visualizations in the images_2d/simulation directory.")
     print("Press Enter to continue...")
     input()  # Wait for user input before closing 
