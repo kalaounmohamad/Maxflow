@@ -264,48 +264,23 @@ class DynamicBridgeSystem:
         for i, module1 in enumerate(structure_modules):
             for module2 in structure_modules[i+1:]:
                 if module1.is_adjacent_to(module2):
-                    # Determine capacity based on module types and IDs
-                    if module1.id in original_bridge_ids or module2.id in original_bridge_ids:
-                        # Original bridge modules have very limited capacity (0.5)
-                        capacity = 1
-                    elif module1.type == ModuleType.BRIDGE or module2.type == ModuleType.BRIDGE:
-                        # New bridge modules have capacity 1
-                        capacity = 1
-                    else:
-                        # Regular structure modules have capacity 10
-                        capacity = 10
-                    
-                    # Add bidirectional edges with appropriate capacity
-                    self.flow_graph.add_edge(module1.id, module2.id, capacity=capacity)
-                    self.flow_graph.add_edge(module2.id, module1.id, capacity=capacity)
+                    # Add bidirectional edges with capacity 10 (increased from 1)
+                    self.flow_graph.add_edge(module1.id, module2.id, capacity=1)
+                    self.flow_graph.add_edge(module2.id, module1.id, capacity=1)
         
         # Connect sources to adjacent structure modules
         for source in self.source_modules:
             adjacent_modules = self.get_adjacent_modules(source)
             for adj in adjacent_modules:
                 if adj.type in [ModuleType.STRUCTURE, ModuleType.BRIDGE]:
-                    # Determine capacity based on module ID
-                    if adj.id in original_bridge_ids:
-                        capacity = 0.5
-                    elif adj.type == ModuleType.BRIDGE:
-                        capacity = 1
-                    else:
-                        capacity = 10
-                    self.flow_graph.add_edge(source.id, adj.id, capacity=capacity)
+                    self.flow_graph.add_edge(source.id, adj.id, capacity=1)  # Increased from 1
         
         # Connect targets to adjacent structure modules
         for target in self.target_positions:
             adjacent_modules = self.get_adjacent_modules(target)
             for adj in adjacent_modules:
                 if adj.type in [ModuleType.STRUCTURE, ModuleType.BRIDGE]:
-                    # Determine capacity based on module ID
-                    if adj.id in original_bridge_ids:
-                        capacity = 0.5
-                    elif adj.type == ModuleType.BRIDGE:
-                        capacity = 1
-                    else:
-                        capacity = 10
-                    self.flow_graph.add_edge(adj.id, target.id, capacity=capacity)
+                    self.flow_graph.add_edge(adj.id, target.id, capacity=1)  # Increased from 1
         
         return self.flow_graph
 
