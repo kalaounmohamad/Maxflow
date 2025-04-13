@@ -262,22 +262,22 @@ class DynamicBridgeSystem:
             for module2 in structure_modules[i+1:]:
                 if module1.is_adjacent_to(module2):
                     # Add bidirectional edges with capacity 10 (increased from 1)
-                    self.flow_graph.add_edge(module1.id, module2.id, capacity=10)
-                    self.flow_graph.add_edge(module2.id, module1.id, capacity=10)
+                    self.flow_graph.add_edge(module1.id, module2.id, capacity=1)
+                    self.flow_graph.add_edge(module2.id, module1.id, capacity=1)
         
         # Connect sources to adjacent structure modules
         for source in self.source_modules:
             adjacent_modules = self.get_adjacent_modules(source)
             for adj in adjacent_modules:
                 if adj.type in [ModuleType.STRUCTURE, ModuleType.BRIDGE]:
-                    self.flow_graph.add_edge(source.id, adj.id, capacity=10)  # Increased from 1
+                    self.flow_graph.add_edge(source.id, adj.id, capacity=1)  # Increased from 1
         
         # Connect targets to adjacent structure modules
         for target in self.target_positions:
             adjacent_modules = self.get_adjacent_modules(target)
             for adj in adjacent_modules:
                 if adj.type in [ModuleType.STRUCTURE, ModuleType.BRIDGE]:
-                    self.flow_graph.add_edge(adj.id, target.id, capacity=10)  # Increased from 1
+                    self.flow_graph.add_edge(adj.id, target.id, capacity=1)  # Increased from 1
         
         return self.flow_graph
 
