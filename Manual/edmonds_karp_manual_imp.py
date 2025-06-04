@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 from collections import deque
+from graph_configs import ALL_CONFIGS
 
 def edmonds_karp(G, source, sink):
     """
@@ -75,23 +76,20 @@ def bfs(G, source, sink):
     else:
         return None, 0
 
-# Create the graph as shown in the image
+# Choose configuration (change this to use different configs)
+config_choice = 0  # 0 for CONFIG_1, 1 for CONFIG_2, etc.
+config = ALL_CONFIGS[config_choice]
+
+print(f"Using configuration: {config['name']}")
+
+# Create the graph from configuration
 G = nx.DiGraph()
 
-# Add edges with capacities (source, target, capacity)
-edges = [
-    ('S', 'S1', float('inf')),
-    ('S', 'S2', float('inf')),
-    ('S1', 'B', 7),
-    ('S1', 'A', 5),
-    ('S2', 'A', 7),
-    ('B', 'D', 10),
-    ('B', 'C', 5),
-    ('A', 'C', 19),
-    ('C', 'E', 27),
-    ('D', 'T', 12),
-    ('E', 'T', 15)
-]
+# Get edges, source, sink, and positions from config
+edges = config['edges']
+source = config['source']
+sink = config['sink']
+pos = config['positions']
 
 # Store original edges to use for visualization later
 original_edges = [(u, v) for u, v, _ in edges]
@@ -100,7 +98,7 @@ for u, v, capacity in edges:
     G.add_edge(u, v, capacity=capacity, flow=0)
 
 # Calculate max flow
-max_flow = edmonds_karp(G, 'S', 'T')
+max_flow = edmonds_karp(G, source, sink)
 print(f"Maximum flow: {max_flow}")
 
 # Print the flow on each edge (only original edges)
@@ -109,18 +107,6 @@ for u, v in original_edges:
     print(f"{u} -> {v}: {G[u][v]['flow']}/{G[u][v]['capacity']}")
 
 # Draw the graph
-pos = {
-    'S': (0, 1),
-    'S1': (1, 2),
-    'S2': (1, 0),
-    'A': (1, 1),
-    'B': (2, 2),
-    'C': (2, 1),
-    'D': (3, 2),
-    'E': (3, 1),
-    'T': (4, 2)
-}
-
 plt.figure(figsize=(10, 6))
 
 # Create a subgraph with only the original edges for visualization
@@ -136,6 +122,6 @@ edge_labels = {(u, v): f"{G[u][v]['flow']}/{G[u][v]['capacity']}"
                for u, v in original_edges}
 nx.draw_networkx_edge_labels(original_graph, pos, edge_labels=edge_labels, font_size=12)
 
-plt.title("Max Flow Network")
-plt.savefig("max_flow_network.png")
+plt.title(f"Max Flow Network - {config['name']}")
+plt.savefig(f"max_flow_{config['name'].lower().replace(' ', '_')}.png")
 plt.show()
