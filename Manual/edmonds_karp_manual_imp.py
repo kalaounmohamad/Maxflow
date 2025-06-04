@@ -57,7 +57,7 @@ def bfs(G, source, sink):
     # Track minimum capacity along the path
     capacity = {source: float('inf')}
     
-    while queue and sink not in path:
+    while queue and sink not in path: ## Main loop stops if sink found
         u = queue.popleft()
         
         for v in G.neighbors(u):
@@ -65,11 +65,12 @@ def bfs(G, source, sink):
             residual = G[u][v]['capacity'] - G[u][v]['flow']
             if residual > 0 and v not in path:
                 path[v] = u
+                # Update capacity while exploring the graph
                 capacity[v] = min(capacity[u], residual)
                 queue.append(v)
                 
                 if v == sink:
-                    break
+                    break ## Exit the neighbor exploration loop when sink is found
     
     if sink in path:
         return path, capacity[sink]
@@ -77,7 +78,7 @@ def bfs(G, source, sink):
         return None, 0
 
 # Choose configuration (change this to use different configs)
-config_choice = 0  # 0 for CONFIG_1, 1 for CONFIG_2, etc.
+config_choice = 11
 config = ALL_CONFIGS[config_choice]
 
 print(f"Using configuration: {config['name']}")
@@ -107,21 +108,37 @@ for u, v in original_edges:
     print(f"{u} -> {v}: {G[u][v]['flow']}/{G[u][v]['capacity']}")
 
 # Draw the graph
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(12, 8))
 
 # Create a subgraph with only the original edges for visualization
 original_graph = nx.DiGraph()
 for u, v in original_edges:
     original_graph.add_edge(u, v)
 
-nx.draw(original_graph, pos, with_labels=True, node_size=3000, node_color='lightblue', 
-        font_size=15, font_weight='bold', arrows=True)
+# Use custom node colors
+node_colors = []
+for node in original_graph.nodes():
+    if node == 'Super_S':
+        node_colors.append('yellow')
+    elif node == 'Super_T':
+        node_colors.append('yellow')
+    elif node.startswith('S_'):
+        node_colors.append('red')
+    elif node.startswith('T_'):
+        node_colors.append('green')
+    elif node.startswith('B_'):
+        node_colors.append('orange')
+    else:
+        node_colors.append('lightblue')
+
+nx.draw(original_graph, pos, with_labels=True, node_size=1500, node_color=node_colors,
+        font_size=10, font_weight='bold', arrows=True)
 
 # Draw edge labels (capacity and flow) only for original edges
 edge_labels = {(u, v): f"{G[u][v]['flow']}/{G[u][v]['capacity']}" 
                for u, v in original_edges}
-nx.draw_networkx_edge_labels(original_graph, pos, edge_labels=edge_labels, font_size=12)
+nx.draw_networkx_edge_labels(original_graph, pos, edge_labels=edge_labels, font_size=8)
 
-plt.title(f"Max Flow Network - {config['name']}")
-plt.savefig(f"max_flow_{config['name'].lower().replace(' ', '_')}.png")
+plt.title(f"Max Flow Network - {config_choice +1} - {config['name']}")
+plt.savefig(f"max_flow_{config_choice +1}_{config['name'].lower().replace(' ', '_')}.png", dpi=300)
 plt.show()
