@@ -165,6 +165,9 @@ class VirtualGridAnalyzer:
         source_ids = [f"V_{s.x}_{s.y}" for s in self.bridge_system.source_modules]
         target_ids = [f"V_{t.x}_{t.y}" for t in self.bridge_system.target_positions]
         
+        # Store all unique positions used in any optimal path
+        self.all_path_positions = set()
+
         for source_id in source_ids:
             for target_id in target_ids:
                 # Check if path exists
@@ -173,8 +176,16 @@ class VirtualGridAnalyzer:
                     path = nx.shortest_path(flow_graph, source_id, target_id)
                     self.optimal_paths.append(path)
                     print(f"Found optimal path from {source_id} to {target_id} with {len(path)} nodes")
-        
+                    
+                    # Add positions from this path to the set
+                    for node in path:
+                        if node != "Super_S" and node != "Super_T" and node.startswith("V_"):
+                            parts = node.split("_")
+                            x, y = int(parts[1]), int(parts[2])
+                            self.all_path_positions.add((x, y))
+
         print(f"Identified {len(self.optimal_paths)} optimal paths in the virtual grid")
+        print(f"Total unique positions used in paths: {len(self.all_path_positions)}")
         
         # Now mark modules that are used in these paths as "structure" (not unused)
         self.mark_used_modules_in_flow()
@@ -184,89 +195,81 @@ class VirtualGridAnalyzer:
     def mark_used_modules_in_flow(self):
         """
         Mark modules that are used in optimal flow paths as "structure" instead of "unused".
+        Only applies to modules that were not originally EMPTY.
+        Also ensures original bridge components needed for basic connectivity remain structure.
         """
         print("Marking modules used in flow paths...")
         
-        # Create a set to track which positions are used in the flow
-        used_positions = set()
-        
-        # Extract positions from all optimal paths
-        for path in self.optimal_paths:
-            # Skip super source and super sink
-            for node in path:
-                if node != "Super_S" and node != "Super_T" and node.startswith("V_"):
-                    parts = node.split("_")
-                    x, y = int(parts[1]), int(parts[2])
-                    used_positions.add((x, y))
-        
-        # Mark used modules as structure
+        used_positions = self.all_path_positions
         structure_count = 0
+        original_bridge_ids = {f"M_B_{x}" for x in range(5, 8)} # IDs of the original bridge
+
         for module_id, module in self.bridge_system.modules.items():
-            # Check if this module's position is in a flow path
+            # If it's currently UNUSED and its position is in the optimal paths
             if module.type == ModuleType.UNUSED and (module.x, module.y) in used_positions:
-                module.type = ModuleType.STRUCTURE
-                structure_count += 1
-                print(f"Module {module_id} at ({module.x}, {module.y}) is used in flow path - marking as STRUCTURE")
-        
-        print(f"Marked {structure_count} modules as STRUCTURE (used in flow paths)")
+                # Mark it back to STRUCTURE only if it wasn't originally EMPTY
+                if not module_id.startswith("E_"):
+                    module.type = ModuleType.STRUCTURE
+                    structure_count += 1
+                    print(f"Module {module_id} at ({module.x}, {module.y}) is used in flow path - marking as STRUCTURE")
+            
+            # Ensure original bridge modules revert to STRUCTURE if they were marked UNUSED
+            # This preserves the initial flow path possibility.
+            if module_id in original_bridge_ids and module.type == ModuleType.UNUSED:
+                 module.type = ModuleType.STRUCTURE
+                 structure_count += 1 # Count it if it wasn't already counted
+                 print(f"Module {module_id} at ({module.x}, {module.y}) is part of original bridge - restoring as STRUCTURE")
+
+        print(f"Marked {structure_count} unique modules as STRUCTURE (used in flow paths or original bridge)")
     
     def identify_bridge_candidates(self):
         """
-        Identify potential bridge locations based on optimal paths through empty spaces.
+        Identify potential bridge locations based on the EMPTY spots 
+        within the set of all positions used in optimal paths.
         
         Returns:
             list: List of bridge candidates (each candidate is a list of positions)
         """
-        # Ensure optimal paths have been identified
-        if not self.optimal_paths:
-            self.identify_optimal_paths()
+        if not hasattr(self, 'all_path_positions') or not self.all_path_positions:
+            print("Error: Optimal path positions not identified yet. Cannot identify bridge candidates.")
+            return []
+            
+        print("Identifying bridge candidates from empty spots within optimal path positions...")
         
-        print("Identifying bridge candidates...")
-        self.bridge_candidates = []
+        candidate_spots = []
+        for x, y in sorted(list(self.all_path_positions)): # Sort for consistent debug output
+            if 0 <= y < self.height and 0 <= x < self.width: # Bounds check
+                module = self.bridge_system.grid[y][x]
+                print(f"Checking position ({x}, {y}): Module ID={module.id if module else 'None'}, Type={module.type if module else 'None'}") # DEBUG PRINT
+                # After mark_used_modules_in_flow, originally empty spots on paths should still be EMPTY
+                if module and module.type == ModuleType.EMPTY:
+                     candidate_spots.append((x, y))
+            else:
+                print(f"Warning: Position ({x}, {y}) from path is out of grid bounds.")
         
-        # Find bridge candidates in each optimal path
-        for path in self.optimal_paths:
-            # Skip super source and super sink
-            path = [node for node in path if node != "Super_S" and node != "Super_T"]
-            
-            bridge_segments = []
-            current_segment = []
-            
-            # Parse each node ID to get coordinates
-            for node_id in path:
-                if node_id.startswith("V_"):
-                    parts = node_id.split("_")
-                    x, y = int(parts[1]), int(parts[2])
-                    
-                    # Check if the real grid has an empty space here
-                    real_module = self.bridge_system.grid[y][x]
-                    if real_module.type.name == "EMPTY":
-                        current_segment.append((x, y))
-                    else:
-                        # End of empty segment
-                        if current_segment:
-                            bridge_segments.append(current_segment)
-                            current_segment = []
-            
-            # Add the last segment if it exists
-            if current_segment:
-                bridge_segments.append(current_segment)
-            
-            # Filter segments to include only those that would connect left and right structure
-            valid_segments = []
-            for segment in bridge_segments:
-                if segment and self.is_segment_connecting_structures(segment):
-                    valid_segments.append(segment)
-                    print(f"Found valid bridge candidate with {len(segment)} positions: {segment}")
-            
-            # Add valid segments as bridge candidates
-            for segment in valid_segments:
-                self.bridge_candidates.append(segment)
+        print(f"Found {len(candidate_spots)} raw empty positions on paths: {sorted(candidate_spots)}")
+
+        if not candidate_spots:
+            print("No empty spots found on optimal paths. No bridge candidates identified.")
+            self.bridge_candidates = []
+            return []
+
+        # Group these spots into connected candidate segments
+        initial_candidates = [[pos] for pos in candidate_spots]
+        merged_candidates = self.merge_overlapping_candidates(initial_candidates)
         
-        # Merge overlapping bridge candidates
-        self.bridge_candidates = self.merge_overlapping_candidates(self.bridge_candidates)
+        # Filter candidates to ensure they actually connect the structures
+        valid_candidates = []
+        for candidate in merged_candidates:
+            if self.is_segment_connecting_structures(candidate):
+                valid_candidates.append(candidate)
+                print(f"Confirmed valid bridge candidate: {candidate}")
+            else:
+                print(f"Filtered out candidate (doesn't connect structures): {candidate}")
         
-        print(f"Identified {len(self.bridge_candidates)} bridge candidates after merging")
+        self.bridge_candidates = valid_candidates
+        
+        print(f"Identified {len(self.bridge_candidates)} final bridge candidates after filtering and merging")
         return self.bridge_candidates
     
     def is_segment_connecting_structures(self, segment):
@@ -934,11 +937,11 @@ if __name__ == "__main__":
     system.visualize_grid("Unused Modules After Flow Analysis", 
                        save_path="images_2d/simulation/03_unused_modules_identified.png")
     
-    # Identify bridge candidates
+    # Identify bridge candidates using the updated method which relies on validated spots
     analyzer.identify_bridge_candidates()
     
-    # Visualize bridge candidates
-    analyzer.visualize_bridge_candidates("Bridge Candidates", 
+    # Visualize the final identified bridge candidates
+    analyzer.visualize_bridge_candidates("Final Bridge Candidates", 
                                       save_path="images_2d/simulation/04_bridge_candidates.png")
     
     # Identify bottlenecks
