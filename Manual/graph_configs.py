@@ -325,18 +325,18 @@ CONFIG_7 = {
     'name': 'Fully Connected Grid Network',
     'edges': [
         # Connect super source to all source nodes
-        ('Super_S', 'S_0', 10),
-        ('Super_S', 'S_1', 10),
-        ('Super_S', 'S_2', 10),
-        ('Super_S', 'S_3', 10),
-        ('Super_S', 'S_4', 10),
+        ('Super_S', 'S_0', 1),
+        ('Super_S', 'S_1', 1),
+        ('Super_S', 'S_2', 1),
+        ('Super_S', 'S_3', 1),
+        ('Super_S', 'S_4', 1),
         
         # Connect all target nodes to super sink
-        ('T_0', 'Super_T', 50),
-        ('T_1', 'Super_T', 50),
-        ('T_2', 'Super_T', 50),
-        ('T_3', 'Super_T', 50),
-        ('T_4', 'Super_T', 50),
+        ('T_0', 'Super_T', 1),
+        ('T_1', 'Super_T', 1),
+        ('T_2', 'Super_T', 1),
+        ('T_3', 'Super_T', 1),
+        ('T_4', 'Super_T', 1),
         
         # === COLUMN 0 (SOURCE NODES) ===
         # Vertical connections between source nodes
@@ -521,18 +521,18 @@ CONFIG_8 = {
     'name': 'Fully Connected Grid Network with Diagonal Connections',
     'edges': [
         # Connect super source to all source nodes
-        ('Super_S', 'S_0', 10),
-        ('Super_S', 'S_1', 10),
-        ('Super_S', 'S_2', 10),
-        ('Super_S', 'S_3', 10),
-        ('Super_S', 'S_4', 10),
+        ('Super_S', 'S_0', 1),
+        ('Super_S', 'S_1', 1),
+        ('Super_S', 'S_2', 1),
+        ('Super_S', 'S_3', 1),
+        ('Super_S', 'S_4', 1),
         
         # Connect all target nodes to super sink
-        ('T_0', 'Super_T', 50),
-        ('T_1', 'Super_T', 50),
-        ('T_2', 'Super_T', 50),
-        ('T_3', 'Super_T', 50),
-        ('T_4', 'Super_T', 50),
+        ('T_0', 'Super_T', 1),
+        ('T_1', 'Super_T', 1),
+        ('T_2', 'Super_T', 1),
+        ('T_3', 'Super_T', 1),
+        ('T_4', 'Super_T', 1),
         
         # === COLUMN 0 (SOURCE NODES) ===
         # Vertical connections between source nodes
@@ -695,18 +695,18 @@ CONFIG_9 = {
     'name': 'Fully Connected Grid Network with Bridges',
     'edges': [
         # Connect super source to all source nodes
-        ('Super_S', 'S_0', 10),
-        ('Super_S', 'S_1', 10),
-        ('Super_S', 'S_2', 10),
-        ('Super_S', 'S_3', 10),
-        ('Super_S', 'S_4', 10),
+        ('Super_S', 'S_0', 1),
+        ('Super_S', 'S_1', 1),
+        ('Super_S', 'S_2', 1),
+        ('Super_S', 'S_3', 1),
+        ('Super_S', 'S_4', 1),
         
         # Connect all target nodes to super sink
-        ('T_0', 'Super_T', 50),
-        ('T_1', 'Super_T', 50),
-        ('T_2', 'Super_T', 50),
-        ('T_3', 'Super_T', 50),
-        ('T_4', 'Super_T', 50),
+        ('T_0', 'Super_T', 1),
+        ('T_1', 'Super_T', 1),
+        ('T_2', 'Super_T', 1),
+        ('T_3', 'Super_T', 1),
+        ('T_4', 'Super_T', 1),
         
         # === COLUMN 0 (SOURCE NODES) ===
         # Vertical connections between source nodes
@@ -843,18 +843,18 @@ CONFIG_10 = {
     'name': 'Extended Grid Network',
     'edges': [
         # Connect super source to all source nodes
-        ('Super_S', 'S_0', 10),
-        ('Super_S', 'S_1', 10),
-        ('Super_S', 'S_2', 10),
-        ('Super_S', 'S_3', 10),
-        ('Super_S', 'S_4', 10),
+        ('Super_S', 'S_0', 1),
+        ('Super_S', 'S_1', 1),
+        ('Super_S', 'S_2', 1),
+        ('Super_S', 'S_3', 1),
+        ('Super_S', 'S_4', 1),
         
         # Connect all target nodes to super sink
-        ('T_0', 'Super_T', 50),
-        ('T_1', 'Super_T', 50),
-        ('T_2', 'Super_T', 50),
-        ('T_3', 'Super_T', 50),
-        ('T_4', 'Super_T', 50),
+        ('T_0', 'Super_T', 1),
+        ('T_1', 'Super_T', 1),
+        ('T_2', 'Super_T', 1),
+        ('T_3', 'Super_T', 1),
+        ('T_4', 'Super_T', 1),
         
         # === COLUMN 0 (SOURCE NODES) ===
         # Vertical connections between source nodes
@@ -1047,18 +1047,18 @@ CONFIG_11 = {
     'name': 'Extended Grid Network with Multiple Columns',
     'edges': [
         # Connect super source to all source nodes
-        ('Super_S', 'S_0', 10),
-        ('Super_S', 'S_1', 10),
-        ('Super_S', 'S_2', 10),
-        ('Super_S', 'S_3', 10),
-        ('Super_S', 'S_4', 10),
+        ('Super_S', 'S_0', 1),
+        ('Super_S', 'S_1', 1),
+        ('Super_S', 'S_2', 1),
+        ('Super_S', 'S_3', 1),
+        ('Super_S', 'S_4', 1),
         
         # Connect all target nodes to super sink
-        ('T_0', 'Super_T', 50),
-        ('T_1', 'Super_T', 50),
-        ('T_2', 'Super_T', 50),
-        ('T_3', 'Super_T', 50),
-        ('T_4', 'Super_T', 50),
+        ('T_0', 'Super_T', 1),
+        ('T_1', 'Super_T', 1),
+        ('T_2', 'Super_T', 1),
+        ('T_3', 'Super_T', 1),
+        ('T_4', 'Super_T', 1),
         
         # === COLUMN 0 (SOURCE NODES) ===
         # Vertical connections between source nodes
@@ -1313,18 +1313,18 @@ CONFIG_12 = {
     'name': 'Extended Grid Network with Full Bridges',
     'edges': [
         # Connect super source to all source nodes
-        ('Super_S', 'S_0', 10),
-        ('Super_S', 'S_1', 10),
-        ('Super_S', 'S_2', 10),
-        ('Super_S', 'S_3', 10),
-        ('Super_S', 'S_4', 10),
+        ('Super_S', 'S_0', 1),
+        ('Super_S', 'S_1', 1),
+        ('Super_S', 'S_2', 1),
+        ('Super_S', 'S_3', 1),
+        ('Super_S', 'S_4', 1),
         
         # Connect all target nodes to super sink
-        ('T_0', 'Super_T', 50),
-        ('T_1', 'Super_T', 50),
-        ('T_2', 'Super_T', 50),
-        ('T_3', 'Super_T', 50),
-        ('T_4', 'Super_T', 50),
+        ('T_0', 'Super_T', 1),
+        ('T_1', 'Super_T', 1),
+        ('T_2', 'Super_T', 1),
+        ('T_3', 'Super_T', 1),
+        ('T_4', 'Super_T', 1),
         
         # === SOURCE AND LEFT STRUCTURE CONNECTIONS (SAME AS CONFIG_11) ===
         # Vertical connections between source nodes
