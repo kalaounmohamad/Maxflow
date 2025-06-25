@@ -78,7 +78,7 @@ def bfs(G, source, sink):
         return None, 0
 
 # Choose configuration (change this to use different configs)
-config_choice = 11
+config_choice = 12
 config = ALL_CONFIGS[config_choice]
 
 print(f"Using configuration: {config['name']}")
@@ -98,6 +98,48 @@ original_edges = [(u, v) for u, v, _ in edges]
 for u, v, capacity in edges:
     G.add_edge(u, v, capacity=capacity, flow=0)
 
+# Create visualization of original network before flow calculation
+plt.figure(figsize=(12, 8))
+original_graph_before_flow = nx.DiGraph()
+
+# Add all nodes and edges from original configuration
+for u, v, capacity in edges:
+    original_graph_before_flow.add_node(u)
+    original_graph_before_flow.add_node(v)
+    original_graph_before_flow.add_edge(u, v)
+
+# Use custom node colors (same as in the final visualization)
+node_colors_original = []
+for node in original_graph_before_flow.nodes():
+    if node == 'Super_S':
+        node_colors_original.append('yellow')
+    elif node == 'Super_T':
+        node_colors_original.append('yellow')
+    elif node.startswith('S_'):
+        node_colors_original.append('red')
+    elif node.startswith('T_'):
+        node_colors_original.append('green')
+    elif node.startswith('B_'):
+        node_colors_original.append('orange')
+    else:
+        node_colors_original.append('lightblue')
+
+# Draw nodes
+nx.draw_networkx_nodes(original_graph_before_flow, pos, node_color=node_colors_original, 
+                      node_size=1500, label=None)
+nx.draw_networkx_labels(original_graph_before_flow, pos, font_size=10, font_weight='bold')
+
+# Draw edges with a single color
+nx.draw_networkx_edges(original_graph_before_flow, pos, arrows=True)
+
+# Draw edge labels showing only capacities
+edge_labels_orig = {(u, v): f"{G[u][v]['capacity']}" for u, v in original_edges if G[u][v]['capacity'] > 0}
+nx.draw_networkx_edge_labels(original_graph_before_flow, pos, edge_labels=edge_labels_orig, font_size=8)
+
+plt.title(f"Original Network - {config_choice +1} - {config['name']}")
+plt.savefig(f"original_{config_choice +1}_{config['name'].lower().replace(' ', '_')}.png", dpi=300)
+plt.close()  # Close the figure to avoid displaying it twice
+
 # Calculate max flow
 max_flow = edmonds_karp(G, source, sink)
 print(f"Maximum flow: {max_flow}")
@@ -110,10 +152,52 @@ for u, v in original_edges:
 # Draw the graph
 plt.figure(figsize=(12, 8))
 
-# Create a subgraph with only the original edges for visualization
+# Create a subgraph that includes all nodes but only non-zero flow edges
 original_graph = nx.DiGraph()
+
+# First, add all nodes to ensure they appear even without active flows
+for u, v, _ in edges:
+    original_graph.add_node(u)
+    original_graph.add_node(v)
+
+# Init edge visualization lists
+edges_to_draw = []
+edge_colors = []
+edge_widths = []
+max_flow_ratio = 0.01  # Initialize to small number to avoid division by zero
+
+# First pass to find max flow ratio for normalization - exclude super source/sink edges
 for u, v in original_edges:
-    original_graph.add_edge(u, v)
+    # Skip super source/sink edges for color normalization
+    if (u.startswith('Super_') or v.startswith('Super_') or 
+        G[u][v]['capacity'] <= 0 or G[u][v]['flow'] <= 0):
+        continue
+        
+    flow_ratio = G[u][v]['flow'] / G[u][v]['capacity']
+    max_flow_ratio = max(max_flow_ratio, flow_ratio)
+
+# Add edges and calculate colors
+for u, v in original_edges:
+    if G[u][v]['capacity'] > 0 and G[u][v]['flow'] > 0:  # Skip zero capacity or zero flow edges
+        original_graph.add_edge(u, v)
+        edges_to_draw.append((u, v))
+        
+        # Calculate color intensity based on flow/capacity ratio
+        flow_ratio = G[u][v]['flow'] / G[u][v]['capacity']
+        
+        # Use a standard color for super source/sink edges
+        if u.startswith('Super_') or v.startswith('Super_'):
+            edge_colors.append((0.7, 0.7, 0.7, 0.8))  # Gray color
+            edge_widths.append(1.5)  # Standard width
+        else:
+            # Normal edges: Normalize by max ratio for better color contrast
+            normalized_ratio = flow_ratio / max_flow_ratio
+            
+            # Edge with minimum flow is light blue, full flow is dark blue
+            edge_colors.append((0.1, 0.1, 0.8, 0.3 + 0.7 * normalized_ratio))
+            
+            # Make edge width proportional to flow amount
+            edge_widths.append(1 + 2 * normalized_ratio)
 
 # Use custom node colors
 node_colors = []
@@ -131,12 +215,18 @@ for node in original_graph.nodes():
     else:
         node_colors.append('lightblue')
 
-nx.draw(original_graph, pos, with_labels=True, node_size=1500, node_color=node_colors,
-        font_size=10, font_weight='bold', arrows=True)
+# Draw nodes
+nx.draw_networkx_nodes(original_graph, pos, node_color=node_colors, 
+                       node_size=1500, label=None)
+nx.draw_networkx_labels(original_graph, pos, font_size=10, font_weight='bold')
 
-# Draw edge labels (capacity and flow) only for original edges
+# Draw edges with color coding
+nx.draw_networkx_edges(original_graph, pos, edgelist=edges_to_draw, 
+                       width=edge_widths, edge_color=edge_colors, arrows=True)
+
+# Draw edge labels (capacity and flow) only for non-zero flow original edges
 edge_labels = {(u, v): f"{G[u][v]['flow']}/{G[u][v]['capacity']}" 
-               for u, v in original_edges}
+               for u, v in original_edges if G[u][v]['capacity'] > 0 and G[u][v]['flow'] > 0}
 nx.draw_networkx_edge_labels(original_graph, pos, edge_labels=edge_labels, font_size=8)
 
 plt.title(f"Max Flow Network - {config_choice +1} - {config['name']}")
