@@ -1621,8 +1621,464 @@ CONFIG_12 = {
     }
 }
 
+# Configuration 13: Grid Network with Full Bridges and Full Forward and Backward Connections
+CONFIG_13 = {
+    'name': 'Extended Grid Network with Full Bridges',
+    'edges': [
+        # Connect super source to all source nodes
+        ('Super_S', 'S_0', 1),
+        ('Super_S', 'S_1', 1),
+        ('Super_S', 'S_2', 1),
+        ('Super_S', 'S_3', 1),
+        ('Super_S', 'S_4', 1),
+        
+        # Connect all target nodes to super sink
+        ('T_0', 'Super_T', 1),
+        ('T_1', 'Super_T', 1),
+        ('T_2', 'Super_T', 1),
+        ('T_3', 'Super_T', 1),
+        ('T_4', 'Super_T', 1),
+        
+        # === SOURCE AND LEFT STRUCTURE CONNECTIONS (SAME AS CONFIG_11) ===
+        # Vertical connections between source nodes
+        ('S_0', 'S_1', 5),
+        ('S_1', 'S_2', 5),
+        ('S_2', 'S_3', 5),
+        ('S_3', 'S_4', 5),
+        
+        # Source to left structure
+        ('S_0', 'M_L_0', 5),
+        ('S_1', 'M_L_1', 5),
+        ('S_2', 'M_L_2', 5),
+        ('S_3', 'M_L_3', 5),
+        ('S_4', 'M_L_4', 5),
+
+        # Left structure to source nodes
+        ('M_L_0', 'S_0', 5),
+        ('M_L_1', 'S_1', 5),
+        ('M_L_2', 'S_2', 5),
+        ('M_L_3', 'S_3', 5),
+        ('M_L_4', 'S_4', 5),
+        
+        # Diagonal connections 
+        ('S_0', 'M_L_1', 5),
+        ('S_1', 'M_L_0', 5),
+        ('S_1', 'M_L_2', 5),
+        ('S_2', 'M_L_1', 5),
+        ('S_2', 'M_L_3', 5),
+        ('S_3', 'M_L_2', 5),
+        ('S_3', 'M_L_4', 5),
+        ('S_4', 'M_L_3', 5),
+
+        # Backward diagonal connections
+        ('M_L_0', 'S_1', 5),
+        ('M_L_1', 'S_0', 5),
+        ('M_L_1', 'S_2', 5),
+        ('M_L_2', 'S_1', 5),
+        ('M_L_2', 'S_3', 5),
+        ('M_L_3', 'S_2', 5),
+        ('M_L_3', 'S_4', 5),
+        ('M_L_4', 'S_3', 5),
+        
+        # Vertical connections in left structure
+        ('M_L_0', 'M_L_1', 5),
+        ('M_L_1', 'M_L_2', 5),
+        ('M_L_2', 'M_L_3', 5),
+        ('M_L_3', 'M_L_4', 5),
+
+        # Downward connections in left structure
+        ('M_L_1', 'M_L_0', 5),
+        ('M_L_2', 'M_L_1', 5),
+        ('M_L_3', 'M_L_2', 5),
+        ('M_L_4', 'M_L_3', 5),
+      
+        # Left structure to additional left structure 1
+        ('M_L_0', 'M_L2_0', 5),
+        ('M_L_1', 'M_L2_1', 5),
+        ('M_L_2', 'M_L2_2', 5),
+        ('M_L_3', 'M_L2_3', 5),
+        ('M_L_4', 'M_L2_4', 5),
+
+        # Additional left structure 1 to left structure
+        ('M_L2_0', 'M_L_0', 5),
+        ('M_L2_1', 'M_L_1', 5),
+        ('M_L2_2', 'M_L_2', 5),
+        ('M_L2_3', 'M_L_3', 5),
+        ('M_L2_4', 'M_L_4', 5),
+
+        # Diagonal connections
+        ('M_L_0', 'M_L2_1', 5),
+        ('M_L_1', 'M_L2_0', 5),
+        ('M_L_1', 'M_L2_2', 5),
+        ('M_L_2', 'M_L2_1', 5),
+        ('M_L_2', 'M_L2_3', 5),
+        ('M_L_3', 'M_L2_2', 5),
+        ('M_L_3', 'M_L2_4', 5),
+        ('M_L_4', 'M_L2_3', 5),
+
+        # Backward diagonal connections
+        ('M_L2_0', 'M_L_1', 5),
+        ('M_L2_1', 'M_L_0', 5),
+        ('M_L2_1', 'M_L_2', 5),
+        ('M_L2_2', 'M_L_1', 5),
+        ('M_L2_2', 'M_L_3', 5),
+        ('M_L2_3', 'M_L_2', 5),
+        ('M_L2_3', 'M_L_4', 5),
+        ('M_L2_4', 'M_L_3', 5),
+        
+        # Vertical connections in additional left structure 1
+        ('M_L2_0', 'M_L2_1', 5),
+        ('M_L2_1', 'M_L2_2', 5),
+        ('M_L2_2', 'M_L2_3', 5),
+        ('M_L2_3', 'M_L2_4', 5),
+
+        # Downward connections in additional left structure 1
+        ('M_L2_1', 'M_L2_0', 5),
+        ('M_L2_2', 'M_L2_1', 5),
+        ('M_L2_3', 'M_L2_2', 5),
+        ('M_L2_4', 'M_L2_3', 5),
+        
+        # Additional left structure 1 to additional left structure 2
+        ('M_L2_0', 'M_L3_0', 5),
+        ('M_L2_1', 'M_L3_1', 5),
+        ('M_L2_2', 'M_L3_2', 5),
+        ('M_L2_3', 'M_L3_3', 5),
+        ('M_L2_4', 'M_L3_4', 5),
+
+        # Additional left structure 2 to additional left structure 1
+        ('M_L3_0', 'M_L2_0', 5),
+        ('M_L3_1', 'M_L2_1', 5),
+        ('M_L3_2', 'M_L2_2', 5),
+        ('M_L3_3', 'M_L2_3', 5),
+        ('M_L3_4', 'M_L2_4', 5),
+        
+        # Diagonal connections
+        ('M_L2_0', 'M_L3_1', 5),
+        ('M_L2_1', 'M_L3_0', 5),
+        ('M_L2_1', 'M_L3_2', 5),
+        ('M_L2_2', 'M_L3_1', 5),
+        ('M_L2_2', 'M_L3_3', 5),
+        ('M_L2_3', 'M_L3_2', 5),
+        ('M_L2_3', 'M_L3_4', 5),
+        ('M_L2_4', 'M_L3_3', 5),
+
+        # Backward diagonal connections
+        ('M_L3_0', 'M_L2_1', 5),
+        ('M_L3_1', 'M_L2_0', 5),
+        ('M_L3_1', 'M_L2_2', 5),
+        ('M_L3_2', 'M_L2_1', 5),
+        ('M_L3_2', 'M_L2_3', 5),
+        ('M_L3_3', 'M_L2_2', 5),
+        ('M_L3_3', 'M_L2_4', 5),
+        ('M_L3_4', 'M_L2_3', 5),
+        
+        # Vertical connections in additional left structure 2
+        ('M_L3_0', 'M_L3_1', 5),
+        ('M_L3_1', 'M_L3_2', 5),
+        ('M_L3_2', 'M_L3_3', 5),
+        ('M_L3_3', 'M_L3_4', 5),
+
+        # Downward connections in additional left structure 2
+        ('M_L3_1', 'M_L3_0', 5),
+        ('M_L3_2', 'M_L3_1', 5),
+        ('M_L3_3', 'M_L3_2', 5),
+        ('M_L3_4', 'M_L3_3', 5),
+        
+        # === BRIDGE CONNECTIONS (EXPANDED FOR ALL ROWS) ===
+        # Additional left structure 2 to bridge column 1 (horizontal)
+        ('M_L3_0', 'B_0_0', 5),
+        ('M_L3_2', 'B_0_2', 5),
+        ('M_L3_4', 'B_0_4', 5),
+
+        # Bridge column 1 to additional left structure 2
+        ('B_0_0', 'M_L3_0', 5),
+        ('B_0_2', 'M_L3_2', 5),
+        ('B_0_4', 'M_L3_4', 5),
+        
+        # Diagonal connections to bridge column 1
+        ('M_L3_1', 'B_0_0', 5),
+        ('M_L3_1', 'B_0_2', 5),
+        ('M_L3_3', 'B_0_2', 5),
+        ('M_L3_3', 'B_0_4', 5),
+
+        # Backward diagonal connections to bridge column 1
+        ('B_0_0', 'M_L3_1', 5),
+        ('B_0_2', 'M_L3_1', 5),
+        ('B_0_2', 'M_L3_3', 5),
+        ('B_0_4', 'M_L3_3', 5),
+        
+        # Vertical connections in bridge column 1
+
+        # Downward connections in bridge column 1
+        
+        # Bridge column 1 to bridge column 2 (horizontal)
+
+        # Bridge column 2 to bridge column 1
+        
+        # Diagonal connections between bridge columns
+        ('B_0_0', 'B_1_1', 5),
+        ('B_0_2', 'B_1_1', 5),
+        ('B_0_2', 'B_1_3', 5),
+        ('B_0_4', 'B_1_3', 5),
+        
+        # Backward diagonal connections between bridge columns
+        ('B_1_1', 'B_0_0', 5),
+        ('B_1_1', 'B_0_2', 5),
+        ('B_1_3', 'B_0_2', 5),
+        ('B_1_3', 'B_0_4', 5),
+
+        # Vertical connections in bridge column 2
+
+        # Downward connections in bridge column 2
+        
+        # Bridge column 2 to additional right structure 1 (horizontal)
+        ('B_1_1', 'M_R2_1', 5),
+        ('B_1_3', 'M_R2_3', 5),
+
+        # Additional right structure 1 to bridge column 2
+        ('M_R2_1', 'B_1_1', 5),
+        ('M_R2_3', 'B_1_3', 5),
+        
+        # Diagonal connections to additional right structure 1
+        ('B_1_1', 'M_R2_0', 5),
+        ('B_1_1', 'M_R2_2', 5),
+        ('B_1_3', 'M_R2_2', 5),
+        ('B_1_3', 'M_R2_4', 5),
+
+        # Backward diagonal connections to additional right structure 1
+        ('M_R2_0', 'B_1_1', 5),
+        ('M_R2_2', 'B_1_1', 5),
+        ('M_R2_2', 'B_1_3', 5),
+        ('M_R2_4', 'B_1_3', 5),
+        
+        # === RIGHT STRUCTURE CONNECTIONS (SAME AS CONFIG_11) ===
+        # Vertical connections in additional right structure 1
+        ('M_R2_0', 'M_R2_1', 5),
+        ('M_R2_1', 'M_R2_2', 5),
+        ('M_R2_2', 'M_R2_3', 5),
+        ('M_R2_3', 'M_R2_4', 5),
+
+        # Downward connections in additional right structure 1
+        ('M_R2_1', 'M_R2_0', 5),
+        ('M_R2_2', 'M_R2_1', 5),
+        ('M_R2_3', 'M_R2_2', 5),
+        ('M_R2_4', 'M_R2_3', 5),
+        
+        # Additional right structure 1 to additional right structure 2
+        ('M_R2_0', 'M_R3_0', 5),
+        ('M_R2_1', 'M_R3_1', 5),
+        ('M_R2_2', 'M_R3_2', 5),
+        ('M_R2_3', 'M_R3_3', 5),
+        ('M_R2_4', 'M_R3_4', 5),
+
+        # Additional right structure 2 to additional right structure 1
+        ('M_R3_0', 'M_R2_0', 5),
+        ('M_R3_1', 'M_R2_1', 5),
+        ('M_R3_2', 'M_R2_2', 5),
+        ('M_R3_3', 'M_R2_3', 5),
+        ('M_R3_4', 'M_R2_4', 5),
+        
+        # Diagonal connections
+        ('M_R2_0', 'M_R3_1', 5),
+        ('M_R2_1', 'M_R3_0', 5),
+        ('M_R2_1', 'M_R3_2', 5),
+        ('M_R2_2', 'M_R3_1', 5),
+        ('M_R2_2', 'M_R3_3', 5),
+        ('M_R2_3', 'M_R3_2', 5),
+        ('M_R2_3', 'M_R3_4', 5),
+        ('M_R2_4', 'M_R3_3', 5),
+
+        # Backward diagonal connections
+        ('M_R3_0', 'M_R2_1', 5),
+        ('M_R3_1', 'M_R2_0', 5),
+        ('M_R3_1', 'M_R2_2', 5),
+        ('M_R3_2', 'M_R2_1', 5),
+        ('M_R3_2', 'M_R2_3', 5),
+        ('M_R3_3', 'M_R2_2', 5),
+        ('M_R3_3', 'M_R2_4', 5),
+        ('M_R3_4', 'M_R2_3', 5),
+        
+        # Vertical connections in additional right structure 2
+        ('M_R3_0', 'M_R3_1', 5),
+        ('M_R3_1', 'M_R3_2', 5),
+        ('M_R3_2', 'M_R3_3', 5),
+        ('M_R3_3', 'M_R3_4', 5),
+
+        # Downward connections in additional right structure 2
+        ('M_R3_1', 'M_R3_0', 5),
+        ('M_R3_2', 'M_R3_1', 5),
+        ('M_R3_3', 'M_R3_2', 5),
+        ('M_R3_4', 'M_R3_3', 5),
+        
+        # Additional right structure 2 to right structure
+        ('M_R3_0', 'M_R_0', 5),
+        ('M_R3_1', 'M_R_1', 5),
+        ('M_R3_2', 'M_R_2', 5),
+        ('M_R3_3', 'M_R_3', 5),
+        ('M_R3_4', 'M_R_4', 5),
+
+        # Right structure to additional right structure 2
+        ('M_R_0', 'M_R3_0', 5),
+        ('M_R_1', 'M_R3_1', 5),
+        ('M_R_2', 'M_R3_2', 5),
+        ('M_R_3', 'M_R3_3', 5),
+        ('M_R_4', 'M_R3_4', 5),
+        
+        # Diagonal connections
+        ('M_R3_0', 'M_R_1', 5),
+        ('M_R3_1', 'M_R_0', 5),
+        ('M_R3_1', 'M_R_2', 5),
+        ('M_R3_2', 'M_R_1', 5),
+        ('M_R3_2', 'M_R_3', 5),
+        ('M_R3_3', 'M_R_2', 5),
+        ('M_R3_3', 'M_R_4', 5),
+        ('M_R3_4', 'M_R_3', 5),
+
+        # Backward diagonal connections
+        ('M_R_0', 'M_R3_1', 5),
+        ('M_R_1', 'M_R3_0', 5),
+        ('M_R_1', 'M_R3_2', 5),
+        ('M_R_2', 'M_R3_1', 5),
+        ('M_R_2', 'M_R3_3', 5),
+        ('M_R_3', 'M_R3_2', 5),
+        ('M_R_3', 'M_R3_4', 5),
+        ('M_R_4', 'M_R3_3', 5),
+        
+        # Vertical connections in right structure
+        ('M_R_0', 'M_R_1', 5),
+        ('M_R_1', 'M_R_2', 5),
+        ('M_R_2', 'M_R_3', 5),
+        ('M_R_3', 'M_R_4', 5),
+
+        # Downward connections in right structure
+        ('M_R_1', 'M_R_0', 5),
+        ('M_R_2', 'M_R_1', 5),
+        ('M_R_3', 'M_R_2', 5),
+        ('M_R_4', 'M_R_3', 5),
+        
+        # Right structure to target nodes
+        ('M_R_0', 'T_0', 5),
+        ('M_R_1', 'T_1', 5),
+        ('M_R_2', 'T_2', 5),
+        ('M_R_3', 'T_3', 5),
+        ('M_R_4', 'T_4', 5),
+
+        # Target nodes to right structure
+        ('T_0', 'M_R_0', 5),
+        ('T_1', 'M_R_1', 5),
+        ('T_2', 'M_R_2', 5),
+        ('T_3', 'M_R_3', 5),
+        ('T_4', 'M_R_4', 5),
+        
+        # Diagonal connections
+        ('M_R_0', 'T_1', 5),
+        ('M_R_1', 'T_0', 5),
+        ('M_R_1', 'T_2', 5),
+        ('M_R_2', 'T_1', 5),
+        ('M_R_2', 'T_3', 5),
+        ('M_R_3', 'T_2', 5),
+        ('M_R_3', 'T_4', 5),
+        ('M_R_4', 'T_3', 5),
+
+        # Backward diagonal connections
+        ('T_0', 'M_R_1', 5),
+        ('T_1', 'M_R_0', 5),
+        ('T_1', 'M_R_2', 5),
+        ('T_2', 'M_R_1', 5),
+        ('T_2', 'M_R_3', 5),
+        ('T_3', 'M_R_2', 5),
+        ('T_3', 'M_R_4', 5),
+        ('T_4', 'M_R_3', 5),
+        
+        # Vertical connections between target nodes
+        ('T_0', 'T_1', 5),
+        ('T_1', 'T_2', 5),
+        ('T_2', 'T_3', 5),
+        ('T_3', 'T_4', 5),
+
+        # Downward connections between target nodes
+        ('T_1', 'T_0', 5),
+        ('T_2', 'T_1', 5),
+        ('T_3', 'T_2', 5),
+        ('T_4', 'T_3', 5),
+    ],
+    'source': 'Super_S',
+    'sink': 'Super_T',
+    'positions': {
+        # Super nodes
+        'Super_S': (-1, 3),
+        'Super_T': (10, 3),
+        
+        # Source nodes
+        'S_0': (0, 0),
+        'S_1': (0, 1),
+        'S_2': (0, 2),
+        'S_3': (0, 3),
+        'S_4': (0, 4),
+        
+        # Left structure nodes
+        'M_L_0': (1, 0),
+        'M_L_1': (1, 1),
+        'M_L_2': (1, 2),
+        'M_L_3': (1, 3),
+        'M_L_4': (1, 4),
+        
+        # Additional left structure nodes 1
+        'M_L2_0': (2, 0),
+        'M_L2_1': (2, 1),
+        'M_L2_2': (2, 2),
+        'M_L2_3': (2, 3),
+        'M_L2_4': (2, 4),
+        
+        # Additional left structure nodes 2
+        'M_L3_0': (3, 0),
+        'M_L3_1': (3, 1),
+        'M_L3_2': (3, 2),
+        'M_L3_3': (3, 3),
+        'M_L3_4': (3, 4),
+        
+        # Bridge nodes in column 4 (all rows)
+        'B_0_0': (4, 0),
+        'B_0_2': (4, 2),
+        'B_0_4': (4, 4),
+        
+        # Bridge nodes in column 5 (all rows)
+        'B_1_1': (5, 1),
+        'B_1_3': (5, 3),
+        
+        # Additional right structure nodes 1
+        'M_R2_0': (6, 0),
+        'M_R2_1': (6, 1),
+        'M_R2_2': (6, 2),
+        'M_R2_3': (6, 3),
+        'M_R2_4': (6, 4),
+        
+        # Additional right structure nodes 2
+        'M_R3_0': (7, 0),
+        'M_R3_1': (7, 1),
+        'M_R3_2': (7, 2),
+        'M_R3_3': (7, 3),
+        'M_R3_4': (7, 4),
+        
+        # Right structure nodes
+        'M_R_0': (8, 0),
+        'M_R_1': (8, 1),
+        'M_R_2': (8, 2),
+        'M_R_3': (8, 3),
+        'M_R_4': (8, 4),
+        
+        # Target nodes
+        'T_0': (9, 0),
+        'T_1': (9, 1),
+        'T_2': (9, 2),
+        'T_3': (9, 3),
+        'T_4': (9, 4),
+    }
+}
+
+
 # Update ALL_CONFIGS list to include CONFIG_12
-ALL_CONFIGS = [CONFIG_1, CONFIG_2, CONFIG_3, CONFIG_4, CONFIG_5, CONFIG_6, CONFIG_7, CONFIG_8, CONFIG_9, CONFIG_10, CONFIG_11, CONFIG_12]
+ALL_CONFIGS = [CONFIG_1, CONFIG_2, CONFIG_3, CONFIG_4, CONFIG_5, CONFIG_6, CONFIG_7, CONFIG_8, CONFIG_9, CONFIG_10, CONFIG_11, CONFIG_12, CONFIG_13]
 
 def get_config(config_name):
     """Get configuration by name"""
