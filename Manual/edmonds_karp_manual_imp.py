@@ -2,6 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from collections import deque
 from graph_configs import ALL_CONFIGS
+import heapq          # ← priority-queue for Dijkstra
 
 def edmonds_karp(G, source, sink):
     """
@@ -77,8 +78,54 @@ def bfs(G, source, sink):
     else:
         return None, 0
 
+def bfs_pq_lexico_sum(G, source, sink):
+    """
+    Return (predecessor_dict, bottleneck_capacity) for the residual graph,
+    using lexicographic cost:
+        1) minimise hop count
+        2) if equal hops, minimise Σ(existing flow) along the path.
+    """
+    # cost[node]  = (hops_so_far, sum_flow_so_far)
+    cost = {source: (0, 0)}
+    pred = {source: None}
+    pq = [(0, 0, source)]       # (hops, sum_flow, node)
+
+    while pq:
+        hops_so_far, flow_so_far, u = heapq.heappop(pq)
+
+        if u == sink:
+            # reconstruct min residual capacity along the path
+            v = sink
+            bottleneck = float('inf')
+            while pred[v] is not None:
+                p = pred[v]
+                residual = G[p][v]['capacity'] - G[p][v]['flow']
+                bottleneck = min(bottleneck, residual)
+                v = p
+            return pred, bottleneck
+
+        # skip if we already found a better way to u
+        if (hops_so_far, flow_so_far) != cost[u]:
+            continue
+
+        for v in G.neighbors(u):
+            residual = G[u][v]['capacity'] - G[u][v]['flow']
+            if residual <= 0:
+                continue                      # saturated edge, ignore
+
+            new_cost = (hops_so_far + 1,     # +1 hop
+                        flow_so_far + G[u][v]['flow'])  # add existing flow
+
+            if v not in cost or new_cost < cost[v]:
+                cost[v] = new_cost
+                pred[v] = u
+                heapq.heappush(pq, (*new_cost, v))
+
+    # no path
+    return None, 0
+
 # Choose configuration (change this to use different configs)
-config_choice = 12
+config_choice = 13
 config = ALL_CONFIGS[config_choice]
 
 print(f"Using configuration: {config['name']}")
